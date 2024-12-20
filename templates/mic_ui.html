@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mic Bot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 100px;
+            background-color: black;
+            color: white;
+        }
+        .mic-button {
+            background-color: rgb(0, 255, 0);
+            color: black;
+            border: none;
+            border-radius: 50%;
+            height: 100px;
+            width: 100px;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0px 0px 20px rgb(0, 255, 0);
+        }
+        #status {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        #language {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Talk to the Bot</h1>
+    <button class="mic-button" id="micBtn">🎤</button>
+    <br>
+    <select id="language">
+        <option value="en-US">English</option>
+        <option value="es-ES">Spanish</option>
+        <option value="fr-FR">French</option>
+        <option value="de-DE">German</option>
+        <option value="hi-IN">Hindi</option>
+        <option value="te-IN">Telugu</option>
+    </select>
+    <div id="status">Click the mic to start.</div>
+
+    <script>
+        let micOn = false;
+
+        document.getElementById("micBtn").addEventListener("click", () => {
+            const statusDiv = document.getElementById("status");
+            const micButton = document.getElementById("micBtn");
+            const language = document.getElementById("language").value;
+
+            if (!micOn) {
+                micOn = true;
+                statusDiv.innerText = "Listening... Click again to stop.";
+                micButton.style.backgroundColor = "red";
+                micButton.style.boxShadow = "0px 0px 20px red";
+
+                const listenLoop = async () => {
+                    while (micOn) {
+                        const response = await fetch("/conversation", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({ language: language })
+                        }).then(res => res.json());
+
+                        if (response.response === "exit") {
+                            statusDiv.innerText = "Bot stopped. Goodbye!";
+                            micButton.style.backgroundColor = "rgb(0, 255, 0)";
+                            micButton.style.boxShadow = "0px 0px 20px rgb(0, 255, 0)";
+                            micOn = false;
+                            break;
+                        }
+
+                        statusDiv.innerText = `Bot: ${response.response}`;
+                    }
+                };
+
+                listenLoop();
+            } else {
+                micOn = false;
+                statusDiv.innerText = "Mic turned off. Click to start again.";
+                micButton.style.backgroundColor = "rgb(0, 255, 0)";
+                micButton.style.boxShadow = "0px 0px 20px rgb(0, 255, 0)";
+            }
+        });
+    </script>
+</body>
+</html>
